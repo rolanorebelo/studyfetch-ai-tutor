@@ -3,45 +3,66 @@ import { prisma } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 import { generateTutorResponse } from '@/lib/ai';
 
+// Type for messages going into the AI model
+interface AIMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const token = req.cookies.get('auth-token')?.value;
     const user = await verifyToken(token || '');
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { message, chatId, currentPage } = await req.json();
 
-    // Verify chat ownership and get document with extracted text
+    // Verify chat ownership and include extracted text
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },
-      include: { 
+      include: {
         document: {
           select: {
             id: true,
             originalName: true,
-            extractedText: true
-          }
-        }
-      }
+            extractedText: true,
+          },
+        },
+      },
     });
 
     if (!chat || chat.userId !== user.id) {
       return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
     }
 
-    // Get chat history
+    // Get last 20 messages for context
     const chatHistory = await prisma.message.findMany({
       where: { chatId },
       orderBy: { createdAt: 'asc' },
-      take: 20, // Limit context
+      take: 20,
     });
 
-    // Prepare PDF context with extracted text
-    const hasExtractedText = chat.document.extractedText && chat.document.extractedText.length > 50;
-    const pdfContext = hasExtractedText 
+    // Map Prisma messages into strictly typed AI messages
+    const mappedHistory: AIMessage[] = chatHistory
+      .map((msg) => {
+        if (msg.role === 'user' || msg.role === 'assistant') {
+          return { role: msg.role, content: msg.content };
+        }
+        return null;
+      })
+      .filter(
+        (m): m is AIMessage => m !== null
+      );
+
+    // Prepare PDF context
+    const hasExtractedText =
+      chat.document.extractedText &&
+      chat.document.extractedText.length > 50;
+
+    const pdfContext = hasExtractedText
       ? `Document: "${chat.document.originalName}"
 
 Full Document Content:
@@ -56,12 +77,12 @@ Note: This PDF document's text content could not be extracted, so I can only pro
     console.log(`📊 Text length: ${chat.document.extractedText?.length || 0} characters`);
     console.log(`💬 User question: ${message}`);
 
-    // Generate AI response with PDF context
+    // Generate AI response
     const aiResponse = await generateTutorResponse(
       message,
       pdfContext,
-      chatHistory.map(msg => ({ role: msg.role, content: msg.content })),
-      currentPage // Add this parameter
+      mappedHistory,
+      currentPage
     );
 
     // Save user message
@@ -74,14 +95,14 @@ Note: This PDF document's text content could not be extracted, so I can only pro
       },
     });
 
-    // Save AI response with annotations - Fix property access
+    // Save AI response
     await prisma.message.create({
       data: {
         chatId,
         userId: user.id,
         role: 'assistant',
-        content: aiResponse.response, // Changed from aiResponse.text
-        pageNumber: aiResponse.action?.pageNumber, // Add optional chaining
+        content: aiResponse.response,
+        pageNumber: aiResponse.action?.pageNumber,
         annotations: aiResponse.action,
       },
     });
@@ -89,16 +110,15 @@ Note: This PDF document's text content could not be extracted, so I can only pro
     // Update chat timestamp
     await prisma.chat.update({
       where: { id: chatId },
-      data: { updatedAt: new Date() }
+      data: { updatedAt: new Date() },
     });
 
-    console.log(`🤖 AI response generated: ${aiResponse.response.substring(0, 100)}...`); // Changed from aiResponse.text
+    console.log(`🤖 AI response generated: ${aiResponse.response.substring(0, 100)}...`);
 
     return NextResponse.json({
-      response: aiResponse.response, // Changed from aiResponse.text
+      response: aiResponse.response,
       action: aiResponse.action,
     });
-
   } catch (error) {
     console.error('Chat API error:', error);
     return NextResponse.json(
