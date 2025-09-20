@@ -43,8 +43,8 @@ interface TutorPageProps {
   params: { id: string }; // ✅ Not a Promise
 }
 
-export default function TutorPage({ params }: TutorPageProps) {
-  const [chatId, setChatId] = useState<string>(params.id);
+export default function TutorPage({ params }: PageProps<TutorPageParams>) {
+  const chatId = params.id; // no need for useState
   const [document, setDocument] = useState<Document | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
