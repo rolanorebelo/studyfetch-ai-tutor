@@ -20,7 +20,7 @@ const PDFActionSchema = z.object({
 export async function generateTutorResponse(
   message: string,
   documentContent?: string,
-  chatHistory?: any[],
+  chatHistory?: { role: 'user' | 'assistant'; content: string }[],
   currentPage?: number
 ) {
   try {
@@ -127,7 +127,7 @@ if (['highlight', 'circle', 'underline'].includes(actionResponse.object.action))
 export async function generateTutorResponseAlternative(
   message: string,
   documentContent?: string,
-  chatHistory?: any[]
+  chatHistory?: { role: 'user' | 'assistant'; content: string }[]
 ) {
   try {
     const response = await generateText({

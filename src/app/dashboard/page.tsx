@@ -6,7 +6,6 @@ import { PDFUpload } from '@/components/pdf/PDFUpload';
 import { 
   FileText, 
   MessageCircle, 
-  Clock, 
   LogOut, 
   Upload,
   TrendingUp,
@@ -31,15 +30,11 @@ interface Document {
 export default function Dashboard() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; name: string } | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    loadUserData();
-    loadDocuments();
-  }, []);
-
-  const loadUserData = async () => {
+ useEffect(() => {
+  const fetchUser = async () => {
     try {
       const response = await fetch('/api/auth/me');
       if (response.ok) {
@@ -53,6 +48,11 @@ export default function Dashboard() {
       router.push('/auth/login');
     }
   };
+
+  fetchUser();
+  loadDocuments();
+}, [router]);
+
 
   const loadDocuments = async () => {
     try {
@@ -82,7 +82,6 @@ export default function Dashboard() {
   };
 
   const totalChats = documents.reduce((acc, doc) => acc + doc.chats.length, 0);
-  const recentDocuments = documents.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -238,7 +237,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-                  {documents.map((doc, index) => (
+                  {documents.map((doc) => (
                     <div 
                       key={doc.id} 
                       className="p-8 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 transition-all duration-300 group"

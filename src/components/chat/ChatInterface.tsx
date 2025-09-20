@@ -4,18 +4,32 @@ import { useState, useRef, useEffect } from 'react';
 import { MessageBubble } from './MessageBubble';
 import { VoiceControls } from './VoiceControls';
 
+interface Annotation {
+  id: string;
+  type: 'highlight' | 'circle' | 'underline';
+  pageNumber: number;
+  coordinates: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  text?: string;
+  color: string;
+}
+
 interface Message {
   id: string;
   content: string;
   role: 'user' | 'assistant';
   pageNumber?: number;
-  annotations?: any[];
+  annotations?: Annotation[]; // Updated type
   timestamp: Date;
 }
 
 interface ChatInterfaceProps {
   chatId: string;
-  onPDFAction: (action: any) => void;
+  onPDFAction: (action: { action: string; pageNumber?: number }) => void;
   messages: Message[];
   onSendMessage: (message: string) => void;
   isLoading: boolean;
@@ -77,7 +91,7 @@ export function ChatInterface({
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 mt-8">
             <p>Start a conversation about your PDF document!</p>
-            <p className="text-sm mt-2">Try asking: "What is this document about?" or "Explain the main concepts"</p>
+            <p className="text-sm mt-2">Try asking: &quot;What is this document about?&quot; or &quot;Explain the main concepts&quot;</p>
           </div>
         ) : (
           messages.map((message) => (

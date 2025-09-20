@@ -10,6 +10,24 @@ interface VoiceControlsProps {
   textToRead?: string;
 }
 
+// ---- Custom Web Speech API type declarations ----
+interface SpeechRecognitionResultLike {
+  isFinal: boolean;
+  0: { transcript: string };
+}
+
+interface SpeechRecognitionEventLike extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultListLike;
+}
+
+interface SpeechRecognitionResultListLike {
+  length: number;
+  [index: number]: SpeechRecognitionResultLike;
+}
+
+// -------------------------------------------------
+
 export function VoiceControls({
   onTranscript,
   isListening,
@@ -20,7 +38,7 @@ export function VoiceControls({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechSynthSupported, setSpeechSynthSupported] = useState(false);
 
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isListeningRef = useRef(false);
   const finalBuffer = useRef<string>('');
@@ -41,12 +59,12 @@ export function VoiceControls({
 
     if (!SpeechRecognition) return;
 
-    const recognition = new SpeechRecognition();
+    const recognition: SpeechRecognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEventLike) => {
       let interim = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
@@ -64,18 +82,16 @@ export function VoiceControls({
       }
     };
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: { error: string }) => {
       console.warn('⚠️ recognition error:', event.error);
       if (['not-allowed', 'audio-capture'].includes(event.error)) {
         onListeningChange(false);
       }
-      // for "no-speech" just let it restart
     };
 
     recognition.onend = () => {
       console.log('🛑 recognition ended');
       if (isListeningRef.current) {
-        // restart after a small delay
         if (restartTimer.current) clearTimeout(restartTimer.current);
         restartTimer.current = setTimeout(() => {
           try {
@@ -204,7 +220,7 @@ export function VoiceControls({
 
 declare global {
   interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
   }
 }

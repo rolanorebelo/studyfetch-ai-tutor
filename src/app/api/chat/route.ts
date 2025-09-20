@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { message, chatId, documentId , currentPage } = await req.json();
+    const { message, chatId, currentPage } = await req.json();
 
     // Verify chat ownership and get document with extracted text
     const chat = await prisma.chat.findUnique({

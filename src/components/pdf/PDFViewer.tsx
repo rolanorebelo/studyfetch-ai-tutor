@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import { pdfjs } from 'react-pdf';
 import { AnnotationLayer } from './AnnotationLayer';
 
 // Dynamically import react-pdf with no SSR
@@ -26,7 +27,7 @@ interface PDFViewerProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   annotations: Annotation[];
-  onLoadSuccess: (pdf: any) => void;
+  onLoadSuccess: (pdf: pdfjs.PDFDocumentProxy) => void; // Updated type
 }
 
 interface Annotation {
@@ -56,7 +57,7 @@ export function PDFViewer({
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -74,10 +75,10 @@ export function PDFViewer({
     return () => window.removeEventListener('resize', updatePageWidth);
   }, []);
 
-  const handleLoadSuccess = (pdf: any) => {
+  const handleLoadSuccess = (pdf: pdfjs.PDFDocumentProxy) => {
     setNumPages(pdf.numPages);
     setIsLoading(false);
-    onLoadSuccess(pdf);
+    onLoadSuccess(pdf); // Ensure the `onLoadSuccess` prop also expects `pdfjs.PDFDocumentProxy`
   };
 
   const handleLoadError = (error: Error) => {
@@ -86,15 +87,10 @@ export function PDFViewer({
     setIsLoading(false);
   };
 
-  const handlePageRenderSuccess = (page: any) => {
-    // Calculate page height dynamically based on the viewport
+  const handlePageRenderSuccess = (page: { getViewport: (options: { scale: number }) => { height: number; width: number } }) => {
     const viewport = page.getViewport({ scale: 1 });
     setPageHeight((viewport.height / viewport.width) * pageWidth);
   };
-
-  const currentPageAnnotations = annotations.filter(
-    annotation => annotation.pageNumber === currentPage
-  );
 
   // Don't render PDF on server side
   if (!isClient) {
