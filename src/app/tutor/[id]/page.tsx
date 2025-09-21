@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PDFViewer } from '@/components/pdf/PDFViewer';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { SplitScreen } from '@/components/layout/SplitScreen';
 import { ArrowLeft } from 'lucide-react';
+import type { ChatMessage, Annotation } from '@/types/chat';
 
 interface Document {
   id: string;
@@ -16,46 +17,51 @@ interface Document {
   mimeType: string;
 }
 
-interface Message {
-  id: string;
-  content: string;
+interface ServerMessage {
+  id: string | number;
+  content?: string;
   role: 'user' | 'assistant';
-  timestamp: Date;
+  timestamp?: string | Date;
   pageNumber?: number;
-  annotations?: Annotation;
+  annotations?: Annotation | Annotation[];
 }
 
-interface Annotation {
-  id: string;
-  type: 'highlight' | 'circle' | 'underline';
-  pageNumber: number;
-  coordinates: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-  text?: string;
-  color: string;
-}
-
+// ⬇️ params is a Promise in Next 15 App Router client pages
 interface TutorPageProps {
-  params: { id: string }; // ✅ Not a Promise
+  params: Promise<{ id: string }>;
 }
 
-export default function TutorPage({ params }: PageProps<TutorPageParams>) {
-  const chatId = params.id; // no need for useState
+export default function TutorPage({ params }: TutorPageProps) {
+  const { id: chatId } = use(params);
+
   const [document, setDocument] = useState<Document | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  // Normalize server messages into ChatMessage[]
+  const normalizeMessages = (raw: ServerMessage[]): ChatMessage[] =>
+    (raw ?? []).map((m) => ({
+      id: String(m.id),
+      content: String(m.content ?? ''),
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      timestamp:
+        m.timestamp instanceof Date
+          ? m.timestamp
+          : new Date(m.timestamp ?? Date.now()),
+      pageNumber: m.pageNumber,
+      annotations: Array.isArray(m.annotations)
+        ? (m.annotations as Annotation[])
+        : m.annotations
+        ? [m.annotations as Annotation]
+        : undefined,
+    }));
+
   useEffect(() => {
     if (!chatId) return;
-
-    const loadChatData = async () => {
+    (async () => {
       try {
         const response = await fetch(`/api/chat/${chatId}`);
         if (!response.ok) {
@@ -65,30 +71,26 @@ export default function TutorPage({ params }: PageProps<TutorPageParams>) {
           }
           throw new Error('Failed to load chat');
         }
-
         const data = await response.json();
         setDocument(data.document);
-        setMessages(data.messages);
-      } catch (error) {
-        console.error('Error loading chat:', error);
+        setMessages(normalizeMessages(data.messages));
+      } catch (err) {
+        console.error('Error loading chat:', err);
         router.push('/dashboard');
       }
-    };
-
-    loadChatData();
+    })();
   }, [chatId, router]);
 
   const handleSendMessage = async (message: string) => {
     setIsLoading(true);
-
     try {
-      const userMessage: Message = {
+      const userMessage: ChatMessage = {
         id: Date.now().toString(),
         content: message,
         role: 'user',
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, userMessage]);
+      setMessages((prev) => [...prev, userMessage]);
 
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -100,27 +102,45 @@ export default function TutorPage({ params }: PageProps<TutorPageParams>) {
           currentPage,
         }),
       });
-
       if (!response.ok) throw new Error('Failed to send message');
 
       const data = await response.json();
 
-      const aiMessage: Message = {
+      // If the AI returns a single action, wrap it as a single-elem annotations array
+      const aiAnnotations: Annotation[] | undefined = data.action
+        ? [
+            {
+              id: String(Date.now() + 2),
+              type: data.action.action as Annotation['type'],
+              pageNumber: data.action.pageNumber ?? currentPage,
+              coordinates: data.action.coordinates!,
+              text: data.action.text,
+              color:
+                data.action.action === 'highlight'
+                  ? '#fef08a'
+                  : data.action.action === 'circle'
+                  ? '#ef4444'
+                  : '#3b82f6',
+            },
+          ]
+        : undefined;
+
+      const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         content: data.response,
         role: 'assistant',
         timestamp: new Date(),
         pageNumber: data.action?.pageNumber,
-        annotations: data.action,
+        annotations: aiAnnotations,
       };
 
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, aiMessage]);
 
       if (data.action) {
         handlePDFAction(data.action);
       }
-    } catch (error) {
-      console.error('Error sending message:', error);
+    } catch (err) {
+      console.error('Error sending message:', err);
     } finally {
       setIsLoading(false);
     }
@@ -150,8 +170,8 @@ export default function TutorPage({ params }: PageProps<TutorPageParams>) {
 
       const newAnnotation: Annotation = {
         id: Date.now().toString(),
-        type: action.action as 'highlight' | 'circle' | 'underline',
-        pageNumber: action.pageNumber || currentPage,
+        type: action.action as Annotation['type'],
+        pageNumber: action.pageNumber ?? currentPage,
         coordinates: action.coordinates,
         text: action.text,
         color:
@@ -162,11 +182,12 @@ export default function TutorPage({ params }: PageProps<TutorPageParams>) {
             : '#3b82f6',
       };
 
-      setAnnotations(prev => [...prev, newAnnotation]);
+      setAnnotations((prev) => [...prev, newAnnotation]);
 
+      // Auto-clear transient annotation highlight/marks after 10s
       setTimeout(() => {
-        setAnnotations(prev =>
-          prev.filter(ann => ann.id !== newAnnotation.id)
+        setAnnotations((prev) =>
+          prev.filter((ann) => ann.id !== newAnnotation.id),
         );
       }, 10000);
     }
@@ -175,7 +196,7 @@ export default function TutorPage({ params }: PageProps<TutorPageParams>) {
   if (!document) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
       </div>
     );
   }
@@ -210,7 +231,6 @@ export default function TutorPage({ params }: PageProps<TutorPageParams>) {
           }
           rightPanel={
             <ChatInterface
-              chatId={chatId}
               onPDFAction={handlePDFAction}
               messages={messages}
               onSendMessage={handleSendMessage}

@@ -3,44 +3,20 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageBubble } from './MessageBubble';
 import { VoiceControls } from './VoiceControls';
-
-interface Annotation {
-  id: string;
-  type: 'highlight' | 'circle' | 'underline';
-  pageNumber: number;
-  coordinates: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-  text?: string;
-  color: string;
-}
-
-interface Message {
-  id: string;
-  content: string;
-  role: 'user' | 'assistant';
-  pageNumber?: number;
-  annotations?: Annotation[]; // Updated type
-  timestamp: Date;
-}
+import type { ChatMessage } from '@/types/chat';
 
 interface ChatInterfaceProps {
-  chatId: string;
   onPDFAction: (action: { action: string; pageNumber?: number }) => void;
-  messages: Message[];
+  messages: ChatMessage[];
   onSendMessage: (message: string) => void;
   isLoading: boolean;
 }
 
-export function ChatInterface({ 
-  chatId, 
-  onPDFAction, 
-  messages, 
-  onSendMessage, 
-  isLoading 
+export function ChatInterface({
+  onPDFAction,
+  messages,
+  onSendMessage,
+  isLoading,
 }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
   const [interim, setInterim] = useState('');
@@ -54,36 +30,42 @@ export function ChatInterface({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input || typeof input !== 'string' || !input.trim()) return;
-    
+    if (!input.trim()) return;
+
     onSendMessage(input);
     setInput('');
     setInterim('');
   };
 
-  // ✅ Accept interim + final and show directly in input
-  const handleVoiceInput = ({ interim, final }: { interim: string; final: string }) => {
+  // Handle interim + final transcripts from voice input
+  const handleVoiceInput = ({
+    interim,
+    final,
+  }: {
+    interim: string;
+    final: string;
+  }) => {
     if (interim) {
       setInterim(interim);
     }
     if (final) {
-      setInput(final.trim());  // overwrite instead of append
+      setInput(final.trim());
       setInterim('');
     }
     inputRef.current?.focus();
   };
 
   // Last AI message for text-to-speech
-  const lastAIMessage = messages
-    .filter(msg => msg.role === 'assistant')
-    .pop();
+  const lastAIMessage = messages.filter((msg) => msg.role === 'assistant').pop();
 
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Chat Header */}
       <div className="p-4 border-b bg-gray-50">
         <h2 className="text-lg font-semibold text-gray-800">AI Tutor</h2>
-        <p className="text-sm text-gray-600">Ask me anything about your document</p>
+        <p className="text-sm text-gray-600">
+          Ask me anything about your document
+        </p>
       </div>
 
       {/* Messages */}
@@ -91,7 +73,10 @@ export function ChatInterface({
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 mt-8">
             <p>Start a conversation about your PDF document!</p>
-            <p className="text-sm mt-2">Try asking: &quot;What is this document about?&quot; or &quot;Explain the main concepts&quot;</p>
+            <p className="text-sm mt-2">
+              Try asking: &quot;What is this document about?&quot; or
+              &quot;Explain the main concepts&quot;
+            </p>
           </div>
         ) : (
           messages.map((message) => (
@@ -102,21 +87,20 @@ export function ChatInterface({
             />
           ))
         )}
-        
+
         {isLoading && (
           <div className="flex items-center space-x-2 text-gray-500">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500" />
             <span className="text-sm">AI is thinking...</span>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input Form */}
       <form onSubmit={handleSubmit} className="p-4 border-t bg-white">
         <div className="flex space-x-2 items-center">
-          {/* Simple input, shows interim or final */}
           <input
             ref={inputRef}
             type="text"
@@ -133,10 +117,10 @@ export function ChatInterface({
             onListeningChange={setIsListening}
             textToRead={lastAIMessage?.content}
           />
-          
+
           <button
             type="submit"
-            disabled={!input || typeof input !== 'string' || !input.trim() || isLoading}
+            disabled={!input.trim() || isLoading}
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send
@@ -146,8 +130,9 @@ export function ChatInterface({
         {/* Debug info */}
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-2 text-xs text-gray-400">
-            Debug: Speech synthesis supported: {'speechSynthesis' in window ? 'Yes' : 'No'}, 
-            Last AI message: {lastAIMessage ? 'Available' : 'None'}
+            Debug: Speech synthesis supported:{' '}
+            {'speechSynthesis' in window ? 'Yes' : 'No'}, Last AI message:{' '}
+            {lastAIMessage ? 'Available' : 'None'}
           </div>
         )}
       </form>

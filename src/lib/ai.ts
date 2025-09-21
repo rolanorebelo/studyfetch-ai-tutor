@@ -41,7 +41,7 @@ export async function generateTutorResponse(
         
         Please provide a helpful response that references specific page numbers when relevant.
       `,
-      maxTokens: 500,
+      maxOutputTokens: 500,
     });
 
     // Generate PDF actions if needed
@@ -109,7 +109,7 @@ if (['highlight', 'circle', 'underline'].includes(actionResponse.object.action))
           
           Keep your response concise and educational.
         `,
-        maxTokens: 300,
+        maxOutputTokens: 300,
       });
 
       return {
@@ -149,7 +149,7 @@ export async function generateTutorResponseAlternative(
         IMPORTANT: Use percentage coordinates (0-100) for better accuracy.
         Only include an action if it would genuinely help the student understand the content better.
       `,
-      maxTokens: 500,
+      maxOutputTokens: 500,
     });
 
     // Parse action from response

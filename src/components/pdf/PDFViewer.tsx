@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { pdfjs } from 'react-pdf';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { AnnotationLayer } from './AnnotationLayer';
 
 // Dynamically import react-pdf with no SSR
@@ -27,7 +27,7 @@ interface PDFViewerProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   annotations: Annotation[];
-  onLoadSuccess: (pdf: pdfjs.PDFDocumentProxy) => void; // Updated type
+  onLoadSuccess: (pdf: PDFDocumentProxy) => void; // ✅ fixed
 }
 
 interface Annotation {
@@ -75,11 +75,12 @@ export function PDFViewer({
     return () => window.removeEventListener('resize', updatePageWidth);
   }, []);
 
-  const handleLoadSuccess = (pdf: pdfjs.PDFDocumentProxy) => {
-    setNumPages(pdf.numPages);
-    setIsLoading(false);
-    onLoadSuccess(pdf); // Ensure the `onLoadSuccess` prop also expects `pdfjs.PDFDocumentProxy`
-  };
+ const handleLoadSuccess = (pdf: PDFDocumentProxy) => {
+  setNumPages(pdf.numPages);
+  setIsLoading(false);
+  onLoadSuccess(pdf);
+};
+
 
   const handleLoadError = (error: Error) => {
     console.error('PDF loading error:', error);

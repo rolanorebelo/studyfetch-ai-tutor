@@ -103,7 +103,7 @@ Note: This PDF document's text content could not be extracted, so I can only pro
         role: 'assistant',
         content: aiResponse.response,
         pageNumber: aiResponse.action?.pageNumber,
-        annotations: aiResponse.action,
+        annotations: aiResponse.action ?? undefined,
       },
     });
 

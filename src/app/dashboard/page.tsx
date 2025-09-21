@@ -30,7 +30,7 @@ interface Document {
 export default function Dashboard() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<{ id: string; name: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; name?: string; email?: string } | null>(null);
   const router = useRouter();
 
  useEffect(() => {
@@ -102,17 +102,17 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center space-x-6">
               {user && (
-                <div className="hidden sm:flex items-center space-x-3 px-4 py-2 bg-gray-50 rounded-full">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-semibold">
-                      {(user.name || user.email).charAt(0).toUpperCase()}
+                  <div className="hidden sm:flex items-center space-x-3 px-4 py-2 bg-gray-50 rounded-full">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-semibold">
+                        {(user.name ?? user.id).charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="text-gray-700 font-medium">
+                      {user.name ?? user.id}
                     </span>
                   </div>
-                  <span className="text-gray-700 font-medium">
-                    {user.name || user.email.split('@')[0]}
-                  </span>
-                </div>
-              )}
+                )}
               <button
                 onClick={handleLogout}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"

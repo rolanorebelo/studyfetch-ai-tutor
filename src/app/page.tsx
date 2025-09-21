@@ -15,9 +15,9 @@ export default function HomePage() {
         if (response.ok) {
           router.push('/dashboard');
         }
-      } catch (error) {
-        // User not logged in, stay on home page
-      }
+      } catch {
+  console.error('An error occurred');
+}
     };
     checkAuth();
   }, [router]);

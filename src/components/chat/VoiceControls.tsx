@@ -26,7 +26,28 @@ interface SpeechRecognitionResultListLike {
   [index: number]: SpeechRecognitionResultLike;
 }
 
-// -------------------------------------------------
+// ✅ Instead of circular type alias, just declare interface globally
+declare global {
+  interface Window {
+    SpeechRecognition?: {
+      new (): SpeechRecognitionInstance;
+    };
+    webkitSpeechRecognition?: {
+      new (): SpeechRecognitionInstance;
+    };
+  }
+}
+
+interface SpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+}
 
 export function VoiceControls({
   onTranscript,
@@ -38,7 +59,7 @@ export function VoiceControls({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechSynthSupported, setSpeechSynthSupported] = useState(false);
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isListeningRef = useRef(false);
   const finalBuffer = useRef<string>('');
@@ -51,15 +72,15 @@ export function VoiceControls({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const SpeechRecognition =
+    const RecognitionCtor =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    setIsSupported(!!SpeechRecognition);
+    setIsSupported(!!RecognitionCtor);
     setSpeechSynthSupported('speechSynthesis' in window);
 
-    if (!SpeechRecognition) return;
+    if (!RecognitionCtor) return;
 
-    const recognition: SpeechRecognition = new SpeechRecognition();
+    const recognition = new RecognitionCtor();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
@@ -108,7 +129,7 @@ export function VoiceControls({
     recognitionRef.current = recognition;
 
     return () => {
-      if (recognitionRef.current) recognitionRef.current.stop();
+      recognitionRef.current?.stop();
       if (restartTimer.current) clearTimeout(restartTimer.current);
       if (currentUtteranceRef.current) window.speechSynthesis.cancel();
     };
@@ -195,7 +216,11 @@ export function VoiceControls({
           disabled={isSpeaking}
           title={isListening ? 'Stop listening' : 'Start voice input'}
         >
-          {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          {isListening ? (
+            <MicOff className="w-4 h-4" />
+          ) : (
+            <Mic className="w-4 h-4" />
+          )}
         </button>
       )}
 
@@ -211,16 +236,13 @@ export function VoiceControls({
           disabled={isListening || !textToRead}
           title={isSpeaking ? 'Stop speaking' : 'Read aloud'}
         >
-          {isSpeaking ? <Pause className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          {isSpeaking ? (
+            <Pause className="w-4 h-4" />
+          ) : (
+            <Volume2 className="w-4 h-4" />
+          )}
         </button>
       )}
     </div>
   );
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
-  }
 }
