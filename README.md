@@ -4,6 +4,10 @@ An intelligent PDF document analysis platform that provides AI-powered tutoring 
 
 🚀 **Live Demo**: [https://studyfetch-ai-tutor-cyan.vercel.app/](https://studyfetch-ai-tutor-cyan.vercel.app/)
 
+🔑 **Demo Credentials**  
+- **Username:** rolano.rebelo@gmail.com  
+- **Password:** 123456  
+
 ## Features
 
 ### 🤖 AI-Powered Learning
