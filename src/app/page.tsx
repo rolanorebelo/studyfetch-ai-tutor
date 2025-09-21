@@ -16,8 +16,8 @@ export default function HomePage() {
           router.push('/dashboard');
         }
       } catch {
-  console.error('An error occurred');
-}
+        console.error('An error occurred');
+      }
     };
     checkAuth();
   }, [router]);
@@ -43,13 +43,13 @@ export default function HomePage() {
             <div className="flex space-x-4">
               <button
                 onClick={handleLogin}
-                className="px-4 py-2 text-gray-600 hover:text-gray-900"
+                className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition-colors"
               >
                 Login
               </button>
               <button
                 onClick={handleRegister}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium transition-colors"
               >
                 Sign Up
               </button>
@@ -64,7 +64,7 @@ export default function HomePage() {
           <h2 className="text-4xl font-bold text-gray-900 sm:text-5xl">
             Learn Smarter with AI
           </h2>
-          <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="mt-4 text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
             Upload your PDF documents and chat with an AI tutor that can highlight, 
             annotate, and explain content in real-time.
           </p>
@@ -72,7 +72,7 @@ export default function HomePage() {
           <div className="mt-8">
             <button
               onClick={handleRegister}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-lg"
+              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-lg transition-colors shadow-lg"
             >
               Get Started Free
             </button>
@@ -81,33 +81,33 @@ export default function HomePage() {
 
         {/* Features */}
         <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
+          <div className="text-center bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
               <BookOpen className="h-8 w-8 text-blue-600" />
             </div>
-            <h3 className="mt-4 text-lg font-semibold">PDF Integration</h3>
-            <p className="mt-2 text-gray-600">
-              Upload any PDF and get AI-powered annotations and highlights
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">PDF Integration</h3>
+            <p className="text-gray-700 leading-relaxed">
+              Upload any PDF and get AI-powered annotations and highlights to enhance your learning experience.
             </p>
           </div>
 
-          <div className="text-center">
-            <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
+          <div className="text-center bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
               <MessageCircle className="h-8 w-8 text-green-600" />
             </div>
-            <h3 className="mt-4 text-lg font-semibold">Voice Interaction</h3>
-            <p className="mt-2 text-gray-600">
-              Ask questions with voice input and hear responses read aloud
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Voice Interaction</h3>
+            <p className="text-gray-700 leading-relaxed">
+              Ask questions with voice input and hear responses read aloud for a natural conversation experience.
             </p>
           </div>
 
-          <div className="text-center">
-            <div className="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
+          <div className="text-center bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
               <Zap className="h-8 w-8 text-purple-600" />
             </div>
-            <h3 className="mt-4 text-lg font-semibold">Smart Learning</h3>
-            <p className="mt-2 text-gray-600">
-              AI understands context and provides personalized explanations
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Smart Learning</h3>
+            <p className="text-gray-700 leading-relaxed">
+              AI understands context and provides personalized explanations tailored to your learning needs.
             </p>
           </div>
         </div>
