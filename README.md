@@ -2,6 +2,8 @@
 
 An intelligent PDF document analysis platform that provides AI-powered tutoring with voice interaction, real-time annotations, and personalized learning experiences.
 
+🚀 **Live Demo**: [https://studyfetch-ai-tutor-cyan.vercel.app/](https://studyfetch-ai-tutor-cyan.vercel.app/)
+
 ## Features
 
 ### 🤖 AI-Powered Learning
@@ -107,9 +109,28 @@ npm run dev
 
 The application will be available at `http://localhost:3000`
 
-## Usage
+## Live Application
 
-### Getting Started
+**Production URL**: [https://studyfetch-ai-tutor-cyan.vercel.app/](https://studyfetch-ai-tutor-cyan.vercel.app/)
+
+The application is deployed on Vercel with full functionality including:
+- User authentication and registration
+- PDF upload and processing
+- AI-powered document analysis
+- Voice recognition and text-to-speech
+- Real-time chat interface
+- PDF annotations and navigation
+
+## Quick Start
+
+Visit the live application at: **[https://studyfetch-ai-tutor-cyan.vercel.app/](https://studyfetch-ai-tutor-cyan.vercel.app/)**
+
+1. **Sign up** for a free account
+2. **Upload a PDF** document (max 10MB)
+3. **Start chatting** with the AI tutor about your document
+4. **Use voice features** for hands-free interaction
+
+## Getting Started
 1. **Register an account** or sign in if you already have one
 2. **Upload a PDF document** from your dashboard
 3. **Start chatting** with the AI tutor about your document
@@ -185,17 +206,29 @@ Voice recognition and synthesis settings can be modified in `src/components/chat
 
 ## Deployment
 
-### Environment Variables
-Ensure all environment variables are properly set in your deployment environment.
+The application is deployed on Vercel at: [https://studyfetch-ai-tutor-cyan.vercel.app/](https://studyfetch-ai-tutor-cyan.vercel.app/)
 
-### Database
-Run migrations in production:
+### Deploy Your Own
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/studyfetch-ai-tutor)
+
+### Environment Variables for Production
+Ensure these environment variables are set in your deployment platform:
+
+```env
+DATABASE_URL="your-production-database-url"
+DIRECT_URL="your-production-database-direct-url"
+NEXTAUTH_SECRET="your-production-secret"
+OPENAI_API_KEY="your-openai-api-key"
+```
+
+### Database Migration for Production
 ```bash
 npx prisma migrate deploy
 ```
 
 ### File Storage
-PDF files are stored in the `public/uploads` directory. For production, consider using cloud storage like AWS S3.
+PDF files are stored in the `public/uploads` directory. For production, consider using cloud storage like AWS S3 or Vercel Blob Storage for better performance and scalability.
 
 ## Troubleshooting
 
